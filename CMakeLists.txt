@@ -51,7 +51,7 @@ file(GLOB_RECURSE SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS
 )
 
 cuda_add_executable(bevdet main.cc ${SRC_LIST})
-target_link_libraries(bevdet ${OpenCV_LIBS} ${YAML_CPP_LIBRARIES} absl::strings -lnppicc -lnppidei -lnvinfer -lcudart -lpthread -lprotobuf  -lglog gflags)
+target_link_libraries(bevdet ${OpenCV_LIBS} ${YAML_CPP_LIBRARIES} absl::strings  -ljsoncpp -lnppicc -lnppidei -lnvinfer -lcudart -lpthread -lprotobuf  -lglog gflags)
 
 add_definitions(-O0 -pthread)
 add_definitions(-DUSE_GPU)

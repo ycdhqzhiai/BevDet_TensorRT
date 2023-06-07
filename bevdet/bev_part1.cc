@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-06 10:45:30 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-07 09:49:01
+ * @Last Modified time: 2023-06-07 14:51:16
  */
 
 #include "bev_part1.h"
@@ -12,6 +12,7 @@
 
 #include "common/file.h"
 #include "common/npy.h"
+#include "common/math.h"
 namespace bev {
 
 using apollo::cyber::common::GetProtoFromFile;
@@ -61,7 +62,7 @@ bool BEVPart1::Init(const std::string& config_path) {
     image_std_[2] = part1_config.std_b();
   }
   
-  data_provider_image_option_.do_crop = true;
+  data_provider_image_option_.do_crop = false;
   data_provider_image_option_.crop_roi.x = input_offset_x_;
   data_provider_image_option_.crop_roi.y = input_offset_y_;
   data_provider_image_option_.crop_roi.height = crop_height_;
@@ -124,10 +125,10 @@ bool BEVPart1::Detect(CameraFrame *frame) {
 
 
   float* input_data = input_blob->mutable_cpu_data(); 
-  for(int i = 0; i < 10000; i++)
+  for(int i = 0; i < npy_vector.size(); i++)
   {
     if (frame->frame_id == 0){
-        if((input_data[i] - npy_vector[i]) != 0)
+        if(abs(input_data[i] - npy_vector[i]) > 0.1)
           AINFO << i << " " << input_data[i] - npy_vector[i];
     } 
   }
@@ -137,20 +138,55 @@ bool BEVPart1::Detect(CameraFrame *frame) {
   RTEngine::Infer();
   cudaDeviceSynchronize();
   AINFO << "infer finish.";
-#if 1 //debug
-  AINFO << output_names_[0];
-  auto output_blob = RTEngine::get_blob(output_names_[0]);
-  AINFO << output_blob->shape()[0];
-  AINFO << output_blob->shape()[1];
-  AINFO << output_blob->shape()[2];
-  AINFO << output_blob->shape()[3];
 
+  auto output_blob = RTEngine::get_blob(output_names_[0]);
+  int out_b = output_blob->num();
+  int out_c = output_blob->channels();
+  int out_h = output_blob->height();
+  int out_w = output_blob->width();
   float* output_data = output_blob->mutable_cpu_data(); 
-  for(int i = 0; i < 10; i++)
-  {
-    AINFO << output_data[i];
-  }  
+
+  int depth_size = out_b  * 59 * out_h * out_w;
+  int feat_size = out_b  * 80 * out_h * out_w;
+  float depth[depth_size];
+  float feat[feat_size];
+  for (int b = 0; b < out_b; b++) {
+    for (int c = 0; c < out_c; c++) {
+      for (int h = 0; h < out_h; h++) {
+        for (int w = 0; w < out_w; w++) {
+          int index = b * out_c * out_h * out_w + c * out_h * out_w + h * out_w + w;
+          if (c < 59) 
+            depth[index] = output_data[index];
+          else
+            feat[index - depth_size] = output_data[index];
+        }
+      }
+    }
+  }
+  softmax(depth, 59, 16, 44);
+#if 0
+    std::vector<unsigned long> npy_shape;
+    std::vector<float> npy_vector;
+
+    bool is_fortran;
+    // load ndarray voxel as vector<float>
+    npy::LoadArrayFromNumpy("../data/fea.npy", npy_shape, is_fortran, npy_vector);
+
+
+  // AINFO <<frame->frame_id;
+  if (frame->frame_id == 0) {
+    for (int i = 0; i < 80; i++) {
+      for (int j = 0; j < 16;j++) {
+        for(int z = 0; z < 44; z++) {
+          int ind = i * 44 * 16 + j*44 + z;
+          float sub = feat[ind] - npy_vector[ind];
+            AINFO << feat[ind] << " " << " " << npy_vector[ind] << " " << sub;
+        } 
+      }
+    }
+  }
 #endif
+
 //   Pred2Coords(frame);
   return true;
 }

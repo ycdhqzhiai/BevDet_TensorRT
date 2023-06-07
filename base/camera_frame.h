@@ -37,9 +37,9 @@ struct CameraFrame {
   // camera intrinsics
   Eigen::Matrix3f camera_k_matrix = Eigen::Matrix3f::Identity();
   // narrow to obstacle projected_matrix
-  Eigen::Matrix3d project_matrix = Eigen::Matrix3d::Identity();
+  Eigen::Matrix3f camera_rot_matrix = Eigen::Matrix3f::Identity();
   // camera to world pose
-  Eigen::Affine3d camera2world_pose = Eigen::Affine3d::Identity();
+  Eigen::Vector3f camera_trans_vector = Eigen::Vector3f::Identity();
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;  // struct CameraFrame
 

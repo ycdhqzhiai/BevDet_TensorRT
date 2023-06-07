@@ -1,5 +1,5 @@
 part1_config {
-  engine_file: "/home/bl-yc/workspace/BL_Deploy/BevDet_TensorRT/checkpoint/bevdet_part1.engine"
+  engine_file: "/home/bl-yc/workspace/BL_Deploy/BevDet_TensorRT/checkpoint/bevdet_batch1.engine"
   src_height: 256
   src_width: 704
   resize_height: 256
