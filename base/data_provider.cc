@@ -119,7 +119,7 @@ bool DataProvider::FillImageData(int rows, int cols, const uint8_t *data,
     AERROR << "Unrecognized image encoding: " << encoding;
   }
 #else  // copy to device memory directly
-  AINFO << "Fill in GPU mode ...";
+  //AINFO << "Fill in GPU mode ...";
   if (encoding == "rgb8") {
 
     cudaMemcpy(rgb_->mutable_gpu_data(), data,

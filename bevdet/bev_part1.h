@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-06 10:40:51 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-06 16:03:37
+ * @Last Modified time: 2023-06-07 17:31:10
  */
 
 #pragma once
@@ -16,11 +16,12 @@
 #include "base/data_provider.h"
 #include "proto/bevdet.pb.h"
 #include "rt_engine.h"
-
+#include "base/eigen_defs.h"
 #include "bevdet/utils/resize.h"
+#include "bevdet/view_transformer.h"
 namespace bev {
 
-class BEVPart1 : public RTEngine{
+class BEVPart1 : public RTEngine {
  public:
   BEVPart1(){
     src_height_ = 0;
@@ -45,7 +46,7 @@ class BEVPart1 : public RTEngine{
   // @param [in/out]: frame
   // detected lanes should be filled, required,
   // 3D information of lane can be filled, optional.
-  bool Detect(CameraFrame *frame);
+  bool Detect(std::vector<cv::Mat>& images);
 //   std::string Name();
 
 //  private:
@@ -71,10 +72,8 @@ class BEVPart1 : public RTEngine{
 
   DataProvider::ImageOptions data_provider_image_option_;
   Image8U image_src_;
-  // std::vector<std::string> net_inputs_;
-  // std::vector<std::string> net_outputs_;
-  // std::vector<base::LaneLine> lane_objects_;
 
+  LSSViewTransformer view_tran;
 };
 
 }  // namespace bev

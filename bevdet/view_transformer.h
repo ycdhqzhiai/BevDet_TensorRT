@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-04-14 14:29:57 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-07 11:57:15
+ * @Last Modified time: 2023-06-08 10:11:30
  */
 
 #pragma once
@@ -13,15 +13,14 @@
 #include "base/distortion_model.h"
 #include "common/npy.h"
 #include "common/log.h"
-//#include "zutils.h"
-
+#include "bevdet/view_transformer.h"
 class LSSViewTransformer {
   public:
     
     LSSViewTransformer();
     ~LSSViewTransformer();
     void Init(int depth, int H_in, int W_in, int downsample);
-    void BEVPool_V2(std::vector<float>& dep, std::vector<float>& fea);
+    void BEVPool_V2(float* dep, float* fea);
     // void BEVPool_V2();
 
   private:
@@ -58,7 +57,9 @@ public:
     std::vector<int> ranks_depth_out_;    
     std::vector<int> interval_starts_out_;
     std::vector<int> interval_lengths_out_;
-    std::vector<float> bev_feature_;
+    // std::vector<float> bev_feature_;
+    //float* bev_feature_;
+    float* bev_feature_;
     // std::unique_ptr<pcl::PointCloud<pcl::PointXYZ>> CloudT_;
 
 }; //class LSSViewTransformer

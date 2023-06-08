@@ -336,6 +336,7 @@ bool ResizeGPU(const Image8U &src,
   // channel_axis: true
   // SRC: 1 H W C
   // DST: 1 H W C
+  AINFO << origin_channel << " " << channel;
   if (origin_channel != channel) {
     AERROR << "channel should be the same after resize.";
     return false;

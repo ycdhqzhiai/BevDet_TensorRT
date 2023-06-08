@@ -2,46 +2,27 @@
  * @Author: ycdhq 
  * @Date: 2023-04-14 14:38:20 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-07 11:01:24
+ * @Last Modified time: 2023-06-08 10:12:59
  */
 #include "view_transformer.h"
-
 bool cmp(int v1,int v2)
 {
 	return v1 < v2;
 }
 
-template <typename T1>
-static std::vector<T1> tran_pose(std::vector<T1>& input, int N, int C, int H, int W){
-                        
-  std::vector<T1> out;
-  out.resize(input.size());
+static void tran_pose(float* input, float* out, int N, int C, int H, int W){
 
-//   for(int n = 0; n < N; n++){
-//     for(int c = 0; c < C; c++) {
-//       for(int h = 0; h < H; h++) {
-//         for(int w = 0; w < W; w++) {
-//           int src_index = n * C * H * W + c * H * W + h * W + w;
-//           int dst_index = n * H * W * C + h * W * C + w * C + c;
-//           out[dst_index] = input[src_index];
-//         }
-//       }
-//     }
-//   }
-
-  for(int n = 0; n < N; n++){
-    for(int h = 0; h < H; h++) {
-      for(int w = 0; w < W; w++) {
-        for(int c = 0; c < C; c++) {
-          int dst_index = n * C * H * W + c * H * W + h * W + w;
-          int src_index = n * H * W * C + h * W * C + w * C + c;
-          out[dst_index] = input[src_index];
+    for(int n = 0; n < N; n++){
+        for(int h = 0; h < H; h++) {
+        for(int w = 0; w < W; w++) {
+            for(int c = 0; c < C; c++) {
+            int dst_index = n * C * H * W + c * H * W + h * W + w;
+            int src_index = n * H * W * C + h * W * C + w * C + c;
+            out[dst_index] = input[src_index];
+            }
         }
-      }
+        }
     }
-  }
-
-  return out;
 }
 
 LSSViewTransformer::LSSViewTransformer() {
@@ -105,7 +86,7 @@ void LSSViewTransformer::CreateFrustumAndLidarPoint() {
     float y_offet = (H_in_ - 1) / float(H_feat_ - 1);
 
     for (int n = 0; n < N_; n++) {
-        AINFO << "intrinsic "  << camera_model_->intrinsic_map_[n];
+        AINFO << camera_model_->rots_map_[n];
         Eigen::Matrix3f combine = camera_model_->rots_map_[n] * camera_model_->intrinsic_map_[n].inverse();
         for (int d =0; d < D_ - 1; d++) {
             for (int u = 0; u < H_feat_; u++) {
@@ -282,12 +263,14 @@ void LSSViewTransformer::CheckData(std::vector<float>& dep, std::vector<float>& 
 
 }
 
-void LSSViewTransformer::BEVPool_V2(std::vector<float>& dep, std::vector<float>& fea) {
-    AINFO << dep.size() << " " << fea.size();
+void LSSViewTransformer::BEVPool_V2(float* dep, float* fea) {
 
     int c = 80;
     int n_intervals = interval_lengths_out_.size();
-    std::vector<float> out(128*128*80, 0);
+    AINFO << c;
+    //std::vector<float> out(128*128*80, 0);
+    //float out[128*128*80] = {0};
+    float* out = new float[128*128*80];
 
     for(int idx = 0; idx < n_intervals * c; idx++) {
         int index = idx / c;
@@ -311,11 +294,8 @@ void LSSViewTransformer::BEVPool_V2(std::vector<float>& dep, std::vector<float>&
         out[cur_rank * c + cur_c] = (float)psum * 1.0;
     }
 
-    bev_feature_ = tran_pose(out, 1, 80, 128, 128);
-    for (int zz = 0; zz < 80; zz++) {
-        // std::cout << out[i] << std::endl;
-        AINFO << bev_feature_[zz];
-    }    
+    bev_feature_ = new float[128*128*80];
+    tran_pose(out, bev_feature_, 1, 80, 128, 128);
 #if 0
 
     std::vector<unsigned long> npy_shape;
@@ -324,18 +304,13 @@ void LSSViewTransformer::BEVPool_V2(std::vector<float>& dep, std::vector<float>&
     bool is_fortran;
     // load ndarray voxel as vector<float>
     AINFO << "compare output";
-    npy::LoadArrayFromNumpy("../data/out.npy", npy_shape, is_fortran, npy_vector);
+    npy::LoadArrayFromNumpy("../data/bev_feature.npy", npy_shape, is_fortran, npy_vector);
     AINFO << npy_vector.size();
 
+
     for (int i = 0; i < npy_vector.size(); i++) {
-        // AINFO << npy_vector[i] << " " << out[i];//; * 0.5672;
-        // int v = npy_vector[i] - out[i];
-        // if (v != 0) {
-        //     AINFO << i;
-        //     AINFO << v;
-        // }
-        if (npy_vector[i] != 0 && out[i] != 0)
-            AINFO << npy_vector[i] / out[i];
+        //if (npy_vector[i] != 0 && out[i] != 0)
+        AINFO << bev_feature_[i] << " " << " " << npy_vector[i] << " " <<  bev_feature_[i] - npy_vector[i];
     }
 #endif    
 }

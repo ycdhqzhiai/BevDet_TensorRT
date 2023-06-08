@@ -2,7 +2,7 @@
  * @Author: yangcheng 
  * @Date: 2022-09-21 14:37:21 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-07 14:44:11
+ * @Last Modified time: 2023-06-08 10:01:08
  */
 #pragma once
 #include <cstdint>
@@ -67,6 +67,60 @@ static void softmax(float* input_p, int C, int H, int W) {
     }
 }
 
+// 实现softmax,在C维度进行,输入为一维数组，数据按照一个channel一个channel排列
+static void softmax(float* input_p, int N, int C, int H, int W)
+{
+    for (int n = 0; n < N; n++) {
+        for(int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+                float sum = 0.0;
+                float max = 0.0;
+                for (int k = 0; k < C; k++) {
+                    if (max < input_p[n * C * H * W + k * W * H + i * W + j])
+                        max = input_p[n * C * H * W + k * W * H + i * W + j];
+                }
+
+                for (int k = 0; k < C; k++) {
+                    input_p[n * C * H * W + k * W * H + i * W + j] = exp(input_p[n * C * H * W + k * W * H + i * W + j] - max);
+                    sum += input_p[n * C * H * W + k * W * H + i * W + j];
+                }
+                for(int k = 0; k < C; k++) {
+                    input_p[n * C * H * W + k * W * H + i * W + j] /= sum;  
+                }
+            }
+        }
+    }
+}
+
+
+
+static void tran_pose(float* input, float* out, int N, int C, int H, int W){
+
+    
+  for(int n = 0; n < N; n++){
+    for(int c = 0; c < C; c++) {
+      for(int h = 0; h < H; h++) {
+        for(int w = 0; w < W; w++) {
+          int src_index = n * C * H * W + c * H * W + h * W + w;
+          int dst_index = n * H * W * C + h * W * C + w * C + c;
+          out[dst_index] = input[src_index];
+        }
+      }
+    }
+  }
+
+    // for(int n = 0; n < N; n++){
+    //     for(int h = 0; h < H; h++) {
+    //     for(int w = 0; w < W; w++) {
+    //         for(int c = 0; c < C; c++) {
+    //         int dst_index = n * C * H * W + c * H * W + h * W + w;
+    //         int src_index = n * H * W * C + h * W * C + w * C + c;
+    //         out[dst_index] = input[src_index];
+    //         }
+    //     }
+    //     }
+    // }
+}
 
 static float* SoftMaxFast(float* src, int32_t length) {
     float alpha = *std::max_element(src, src + length);
