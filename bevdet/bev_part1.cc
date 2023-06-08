@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-06 10:45:30 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-08 09:33:19
+ * @Last Modified time: 2023-06-08 10:48:17
  */
 
 #include "bev_part1.h"
@@ -152,7 +152,6 @@ bool BEVPart1::Detect(std::vector<cv::Mat>& images) {
     cudaDeviceSynchronize();
     RTEngine::Infer();
     cudaDeviceSynchronize();
-    AINFO << "infer finish.";
 
     auto output_blob = RTEngine::get_blob(output_names_[0]);
     int out_b = output_blob->num();
@@ -203,6 +202,8 @@ bool BEVPart1::Detect(std::vector<cv::Mat>& images) {
   softmax(depth, 6, 59, 16, 44);
   float feat_pose[ 6*80*16*44];
   tran_pose(feat, feat_pose, 6, 80, 16, 44);
+  AINFO << "part1 infer finish.";
+
 #if 0
     std::vector<unsigned long> npy_shape;
     std::vector<float> npy_vector;

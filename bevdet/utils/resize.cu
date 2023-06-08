@@ -336,15 +336,10 @@ bool ResizeGPU(const Image8U &src,
   // channel_axis: true
   // SRC: 1 H W C
   // DST: 1 H W C
-  AINFO << origin_channel << " " << channel;
   if (origin_channel != channel) {
     AERROR << "channel should be the same after resize.";
     return false;
   }
-  AINFO << width << " " << height << " " << channel;
-  AINFO << origin_width << " " << origin_height << " " << origin_channel;
-  AINFO << stepwidth << " " << start_axis;
-
   float fx = static_cast<float>(origin_width) / static_cast<float>(width);
   float fy = static_cast<float>(origin_height) / static_cast<float>(height);
   const dim3 block(32, 8);

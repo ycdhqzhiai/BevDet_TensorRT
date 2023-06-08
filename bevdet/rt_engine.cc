@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-06 10:33:35 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-06 15:30:06
+ * @Last Modified time: 2023-06-08 10:47:50
  */
 
 #include "rt_engine.h"
@@ -85,7 +85,6 @@ void RTEngine::init_blob(std::vector<std::string> names) {
     for (size_t i = 0; i < dims.nbDims; i++)
       count = count * dims.d[i];
     // int count = dims.c() * dims.h() * dims.w() * max_batch_size_;
-    AINFO << count;
     cudaMalloc(&buffers_[bindingIndex], count * sizeof(float));
     std::vector<int> shape;
     ACHECK(this->shape(name, &shape));
