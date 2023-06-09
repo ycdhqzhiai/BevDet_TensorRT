@@ -5,14 +5,12 @@ project(bevdet)
 SET(CMAKE_BUILD_TYPE "Debug")
 add_definitions(-w)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -mavx -msse4.1 -mavx2 -D_GLIBCXX_USE_CXX11_ABI=1")
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Ofast -g -Wfatal-errors -D_GLIBCXX_USE_CXX11_ABI=1")
 option (USE_GPU "Use tutorial provided math implementation" ON)
+
 find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(absl REQUIRED)
 
 
 set(TRT_DIR $ENV{TENSORRT_DIR})
@@ -51,7 +49,7 @@ file(GLOB_RECURSE SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS
 )
 
 cuda_add_executable(bevdet main.cc ${SRC_LIST})
-target_link_libraries(bevdet ${OpenCV_LIBS} ${YAML_CPP_LIBRARIES} absl::strings  -ljsoncpp -lnppicc -lnppidei -lnvinfer -lcudart -lpthread -lprotobuf  -lglog gflags)
+target_link_libraries(bevdet ${OpenCV_LIBS} ${YAML_CPP_LIBRARIES}  -ljsoncpp -lnppicc -lnppidei -lnvinfer -lcudart -lpthread -lprotobuf  -lglog -lgflags)
 
 add_definitions(-O0 -pthread)
 add_definitions(-DUSE_GPU)

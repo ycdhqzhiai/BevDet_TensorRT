@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-04-14 14:38:20 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-08 10:12:59
+ * @Last Modified time: 2023-06-09 09:47:07
  */
 #include "view_transformer.h"
 bool cmp(int v1,int v2)
@@ -239,8 +239,7 @@ void LSSViewTransformer::CheckData(std::vector<float>& dep, std::vector<float>& 
     AINFO << "Load ";
 
     npy::LoadArrayFromNumpy(npy_file, shape, is_fortran, data);
-    std::cout << "npy size " << data.size() << std::endl;
-    std::cout << "C++ size " << interval_lengths_out_.size() << std::endl;
+
     for (int i = 0 ; i < interval_lengths_out_.size(); i++) {
         // dep[i] = data[i];
         if ((data[i] - interval_lengths_out_[i]) != 0)
