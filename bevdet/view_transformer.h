@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-04-14 14:29:57 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-08 10:11:30
+ * @Last Modified time: 2023-06-13 10:22:51
  */
 
 #pragma once
@@ -10,7 +10,7 @@
 
 #include <Eigen/Dense>
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "base/distortion_model.h"
+#include "base/sensor_param.h"
 #include "common/npy.h"
 #include "common/log.h"
 #include "bevdet/view_transformer.h"
@@ -42,7 +42,7 @@ class LSSViewTransformer {
     int H_feat_;
     Eigen::Tensor<float, 5> frustum_;
 
-    BaseCameraDistortionModel *camera_model_ = nullptr;
+    SensorParam *camera_model_ = nullptr;
 
 public:
 

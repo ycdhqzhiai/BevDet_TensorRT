@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-08 14:02:57 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-09 11:17:38
+ * @Last Modified time: 2023-06-13 10:24:11
  */
 #pragma once
 #include <iostream>
@@ -25,6 +25,8 @@ struct Point {
 
   Point operator-(const Point& b) const { return Point(x - b.x, y - b.y); }
 };
+
+
 
 
 template<typename T>

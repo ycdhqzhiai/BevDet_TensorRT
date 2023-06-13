@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-04-14 14:38:20 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-09 09:47:07
+ * @Last Modified time: 2023-06-13 15:20:58
  */
 #include "view_transformer.h"
 bool cmp(int v1,int v2)
@@ -48,7 +48,7 @@ void LSSViewTransformer::Init(int depth, int H_in, int W_in, int downsample) {
     W_feat_ = W_in / downsample;
     AINFO << "D " << D_ - 1 << " H_feat " << W_feat_ << " W_feat " << W_feat_; // output: 1
 
-    camera_model_ = BaseCameraDistortionModel::Instance();
+    camera_model_ = SensorParam::Instance();
 
 
     Eigen::Vector3f x(-51.2, 51.2, 0.8);
@@ -86,7 +86,7 @@ void LSSViewTransformer::CreateFrustumAndLidarPoint() {
     float y_offet = (H_in_ - 1) / float(H_feat_ - 1);
 
     for (int n = 0; n < N_; n++) {
-        AINFO << camera_model_->rots_map_[n];
+        //AINFO << camera_model_->rots_map_[n];
         Eigen::Matrix3f combine = camera_model_->rots_map_[n] * camera_model_->intrinsic_map_[n].inverse();
         for (int d =0; d < D_ - 1; d++) {
             for (int u = 0; u < H_feat_; u++) {

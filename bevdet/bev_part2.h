@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-08 10:23:17 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-09 12:03:08
+ * @Last Modified time: 2023-06-09 16:28:46
  */
 
 #pragma once
@@ -19,23 +19,11 @@
 #include "base/eigen_defs.h"
 #include "bevdet/utils/resize.h"
 #include "bevdet/view_transformer.h"
+#include "nuscenes_box.h"
+
+
 namespace bev {
 using out_tensor = std::pair<int, float*>;
-
-struct CenterPointResult {
-  /// Bounding box 3d: {x, y, z, x_size, y_size, z_size, yaw,vel1,vel2}
-  // float bbox[9];
-  /// Score
-  float bbox[7];
-
-  float score;
-  /// the class label
-  //'car',         'truck',   'construction_vehicle',
-  //'bus',         'trailer', 'barrier',
-  //'motorcycle',  'bicycle', 'pedestrian',
-  //'traffic_cone'
-  uint32_t label;
-};
 
 class BEVPart2 : public RTEngine {
  public:
@@ -44,7 +32,7 @@ class BEVPart2 : public RTEngine {
     src_width_ = 0;
   }
 
-  ~BEVPart2() {}
+  ~BEVPart2() {pre_box_.clear();};
 
   bool Init(const std::string& config_path);
 
@@ -61,7 +49,7 @@ private:
                     const out_tensor& dimtb,
                     const out_tensor& rottb,
                     const out_tensor& heatmaptb, float score_threshold,
-                    uint32_t& first_label, std::vector<CenterPointResult>& res);
+                    uint32_t& first_label, std::vector<BBox>& res);
 
   uint16_t src_height_;
   uint16_t src_width_;
@@ -76,6 +64,10 @@ private:
   int post_max_size_ = 500;
   float nms_thr_[6] = {0.2, 0.2, 0.2, 0.2, 0.2, 0.2};
   float factor_[6] = {1.0,0.7,0.4,1.0,1.0,4.5};
+public:
+  std::vector<NuscenesBox> pre_box_;
+  
+
 };
 
 }  // namespace bev

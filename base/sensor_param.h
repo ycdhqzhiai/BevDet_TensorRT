@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-04-14 16:40:44 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-07 11:11:16
+ * @Last Modified time: 2023-06-13 10:24:36
  */
 #pragma once
 
@@ -15,15 +15,11 @@
 #include "common/log.h"
 #include "base/eigen_defs.h"
 
-class BaseCameraDistortionModel {
+class SensorParam {
   public:
     bool Init();
-    bool LoadCameraIntrinsic(const std::string &yaml_file);
-
-  private:
-    bool set_params(size_t width, size_t height,
-                  const Eigen::VectorXf& params);
-
+    bool LoadSensorParam(const std::string &yaml_file);
+    Eigen::Matrix4d GetProjectionMatrix(const std::string& name) const;
   private:
     std::mutex mutex_;
     bool inited_ = false;
@@ -31,14 +27,15 @@ class BaseCameraDistortionModel {
   public:    
     int camera_height_;
     int camera_width_;
-    // EigenMap<std::string, Eigen::Matrix3f> intrinsic_map_;
-    // EigenMap<std::string, Eigen::Matrix3f> rots_map_;
-    // EigenMap<std::string, Eigen::Vector3f> trans_map_;
+
+
     EigenVector<Eigen::Matrix3f> intrinsic_map_;
     EigenVector<Eigen::Matrix3f> rots_map_;
     EigenVector<Eigen::Vector3f> trans_map_;
 
     Eigen::Matrix3f post_rots_;
     Eigen::Vector3f post_trans_;
-  DECLARE_SINGLETON(BaseCameraDistortionModel);
+
+    EigenMap<std::string, Eigen::Matrix4d> coordinate_map_;
+  DECLARE_SINGLETON(SensorParam);
 };

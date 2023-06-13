@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-08 10:25:02 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-09 12:05:00
+ * @Last Modified time: 2023-06-09 16:16:56
  */
 
 #include "bev_part2.h"
@@ -58,6 +58,7 @@ bool BEVPart2::Init(const std::string& config_path) {
 }
 
 bool BEVPart2::Detect(float* bev_feature) {
+  pre_box_.clear();
   auto start = std::chrono::high_resolution_clock::now();
 
   auto input_blob = RTEngine::get_blob(input_names_[0]);
@@ -72,12 +73,10 @@ bool BEVPart2::Detect(float* bev_feature) {
 
   uint32_t first_label = 0;
 
-  std::vector<CenterPointResult> ress;
-
   for (int t = 0; t < 6; t++){
 
     std::vector<out_tensor>  preds_vecs;
-    std::vector<CenterPointResult> res;
+    std::vector<BBox> res;
 
     for (int i = 0; i < 5; i++) {
       int index = t * 5 + i;
@@ -109,7 +108,7 @@ bool BEVPart2::Detect(float* bev_feature) {
       std::vector<bool> is_first(decode_res_num, true);
       for (int i = 0; i < decode_res_num; ++i) {
         if (!exist_box[i]) continue;
-        ress.push_back(res[i]);  // add a box as result
+        pre_box_.push_back(NuscenesBox(res[i]));  // add a box as result
         for (int j = i + 1; j < decode_res_num; ++j) {
           if (!exist_box[j]) continue;
           float iou = iou_bev(is_first, box_areas, box_corners, for_box2d, bboxes, j, i);
@@ -118,7 +117,6 @@ bool BEVPart2::Detect(float* bev_feature) {
         }
       }
     }
-    AINFO << "ress num " << ress.size();
   }
   return true;
 }
@@ -128,7 +126,7 @@ int BEVPart2::decode(const out_tensor& regtb,
                   const out_tensor& dimtb,
                   const out_tensor& rottb,
                   const out_tensor& heatmaptb, float score_threshold,
-                  uint32_t& first_label, std::vector<CenterPointResult>& res) {
+                  uint32_t& first_label, std::vector<BBox>& res) {
   float* heatmap = heatmaptb.second;
   int heatmap_shape = heatmaptb.first;
 
@@ -205,7 +203,7 @@ int BEVPart2::decode(const out_tensor& regtb,
     for (auto i = 0u; i < top_scores.size(); i++) {
       if (top_hei[i] >= post_center_range_[2] &&
           top_hei[i] <= post_center_range_[5]) {
-        CenterPointResult tmp_result;
+        BBox tmp_result;
         float xs = (top_xs[i] + top_reg[i * 2]) * out_size_factor_ * voxel_size_[0] + pc_range_[0];
         float ys = (top_ys[i] + top_reg[i * 2 + 1]) * out_size_factor_ * voxel_size_[1] + pc_range_[1];
         //AINFO << xs << " " <<ys;
@@ -213,12 +211,13 @@ int BEVPart2::decode(const out_tensor& regtb,
             xs <= post_center_range_[3] && ys <= post_center_range_[4]) {
           tmp_result.bbox[0] = xs;
           tmp_result.bbox[1] = ys;
-          tmp_result.bbox[2] =
-              top_hei[i];// - res[res_num].bbox[5] * 0.5f;
+
           tmp_result.bbox[3] = std::exp(top_dim[3 * i]);
           tmp_result.bbox[4] = std::exp(top_dim[3 * i + 1]);
           tmp_result.bbox[5] = std::exp(top_dim[3 * i + 2]);
-
+          
+          tmp_result.bbox[2] =
+              top_hei[i] - tmp_result.bbox[5] * 0.5f;
           tmp_result.bbox[6] =
               atan2(top_rot[2 * i], top_rot[2 * i + 1]);
           tmp_result.score = top_scores[i];//sigmoid(top_scores[i]);//sigmoid(top_scores[i]);//top_scores[i];
