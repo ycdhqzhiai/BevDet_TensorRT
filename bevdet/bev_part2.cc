@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-08 10:25:02 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-09 16:16:56
+ * @Last Modified time: 2023-06-14 16:33:30
  */
 
 #include "bev_part2.h"
@@ -94,30 +94,40 @@ bool BEVPart2::Detect(float* bev_feature) {
                                 preds_vecs[2],
                                 preds_vecs[3],
                                 preds_vecs[4],
-                                0.1, first_label, res);
-    if (decode_res_num > 0) {
-      float bboxes[500][5];
-      float box_areas[500];
-      float for_box2d[500][4];
-      Point box_corners[500][5];
+                                0.2, first_label, res);
 
-      for (auto i = 0; i < decode_res_num; ++i) {
-        xywhr2xyxyr(res[i].bbox, bboxes[i], factor_[t]);
-      }
-      std::vector<bool> exist_box(decode_res_num, true);
-      std::vector<bool> is_first(decode_res_num, true);
-      for (int i = 0; i < decode_res_num; ++i) {
-        if (!exist_box[i]) continue;
+
+    AlignedNMSBev(res);
+    for (auto i = 0; i < decode_res_num; ++i) {
+      if (res[i].isDrop) {
+        AINFO << res[i].bbox[0] << " " <<res[i].bbox[1];
         pre_box_.push_back(NuscenesBox(res[i]));  // add a box as result
-        for (int j = i + 1; j < decode_res_num; ++j) {
-          if (!exist_box[j]) continue;
-          float iou = iou_bev(is_first, box_areas, box_corners, for_box2d, bboxes, j, i);
-          if (iou > nms_thr_[t])
-            exist_box[j] = false;
-        }
       }
     }
+    // if (decode_res_num > 0) {
+    //   float bboxes[500][5];
+    //   float box_areas[500];
+    //   float for_box2d[500][4];
+    //   Point box_corners[500][5];
+
+    //   for (auto i = 0; i < decode_res_num; ++i) {
+    //     xywhr2xyxyr(res[i].bbox, bboxes[i], factor_[t]);
+    //   }
+    //   std::vector<bool> exist_box(decode_res_num, true);
+    //   std::vector<bool> is_first(decode_res_num, true);
+    //   for (int i = 0; i < decode_res_num; ++i) {
+    //     if (!exist_box[i]) continue;
+    //     pre_box_.push_back(NuscenesBox(res[i]));  // add a box as result
+    //     for (int j = i + 1; j < decode_res_num; ++j) {
+    //       if (!exist_box[j]) continue;
+    //       float iou = iou_bev(is_first, box_areas, box_corners, for_box2d, bboxes, j, i);
+    //       if (iou > nms_thr_[t])
+    //         exist_box[j] = false;
+    //     }
+    //   }
+    // }
   }
+  AINFO << pre_box_.size();
   return true;
 }
 

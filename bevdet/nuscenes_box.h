@@ -4,7 +4,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-09 14:44:18 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-13 14:25:52
+ * @Last Modified time: 2023-06-14 16:17:02
  */
 #pragma once
 
@@ -26,6 +26,7 @@ struct BBox {
   //'motorcycle',  'bicycle', 'pedestrian',
   //'traffic_cone'
   uint32_t label;
+  bool isDrop = false;
 };
 
 class NuscenesBox {

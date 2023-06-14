@@ -2,7 +2,7 @@
  * @Author: ycdhq 
  * @Date: 2023-06-06 11:17:59 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-13 16:21:19
+ * @Last Modified time: 2023-06-14 16:34:17
  */
 #include "bevdet/bev_part1.h"
 #include "bevdet/bev_part2.h"
@@ -19,6 +19,10 @@ std::string views_img[6] = {"../data/n008-2018-08-01-15-16-36-0400__CAM_FRONT_LE
                             "../data/n008-2018-08-01-15-16-36-0400__CAM_BACK__1533151604037558.jpg",
                             "../data/n008-2018-08-01-15-16-36-0400__CAM_BACK_RIGHT__1533151604028370.jpg"};
 
+
+int left[12] = {1,1,1,2,2,3,3,4,5,5,6,7}; 
+int right[12] = {2,5,4,6,3,7,4,8,6,8,7,8}; 
+
 void draw_box(const std::vector<cv::Mat>& images, 
   std::vector<bev::NuscenesBox>& pre_boxs) {
   SensorParam* sensor_param = SensorParam::Instance();
@@ -31,11 +35,12 @@ void draw_box(const std::vector<cv::Mat>& images,
 
     Eigen::Matrix3f camera_intrinsic = sensor_param->intrinsic_map_[i];
    
-    AINFO << camera_intrinsic;
 
     for(auto& pre_box : pre_boxs) {
       //cv::Point2f show_points[8];
+      //std::vector<cv::Point2f> up_points;
       std::vector<cv::Point2f> show_points;
+
       for (int j = 0; j < 8; j++) {
         Eigen::Vector4d pts_camera = static_cast<Eigen::Matrix<double, 4, 1, 0, 4, 1>>(
               lidar2camera.inverse() * Eigen::Vector4d(pre_box.corner_x_[j],
@@ -44,18 +49,18 @@ void draw_box(const std::vector<cv::Mat>& images,
         Eigen::Vector3d pts_img = camera_intrinsic.cast<double>() * Eigen::Vector3d(pts_camera(0) / pts_camera(2),
                                           pts_camera(1) / pts_camera(2),
                                           1.0);
-        
         if (pts_camera(2) > 0.5 && pts_img(0) > 0 &&
           pts_img(1) > 0 && pts_img(0) < show_img.cols &&
           pts_img(1) < show_img.rows) {
           show_points.push_back(cv::Point2f(pts_img(0), pts_img(1)));
+          //show_points[j]cv::Point2f(pts_img(0), pts_img(1)));
+
         }
       }
-
-      for (int n = 0; n < show_points.size(); n++) {
-        for (int m = 0; m < show_points.size(); m++) {
-          if (m != n)
-            cv::line(show_img, show_points[n], show_points[m], cv::Scalar(0, 0, 255), 5, cv::LINE_8);
+      if (show_points.size() > 0) {
+        AINFO <<show_points.size();
+        for (int n = 0; n < 12; n++) {
+          cv::line(show_img, show_points[left[n] - 1], show_points[right[n] - 1], cv::Scalar(0, 0, 255), 2, cv::LINE_8);
         }
       }
     }

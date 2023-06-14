@@ -2,13 +2,13 @@
  * @Author: ycdhq 
  * @Date: 2023-06-08 14:02:57 
  * @Last Modified by: ycdhq
- * @Last Modified time: 2023-06-13 10:24:11
+ * @Last Modified time: 2023-06-14 16:31:20
  */
 #pragma once
 #include <iostream>
 #include <cmath>
 #include <algorithm>
-
+#include "nuscenes_box.h"
 constexpr float EPS = 1e-8;
 
 struct Point {
@@ -387,4 +387,118 @@ std::vector<T1> reshape(const T1* input,
     }
   }
   return out;
+}
+
+inline void FindMaxMin(float (&box)[4][2], float& maxVAl, float& minVAl, int xyIdx){
+    
+    maxVAl = box[0][xyIdx];
+    minVAl = box[0][xyIdx];
+    
+    for(auto idx=0; idx < 4; idx++){
+        if (maxVAl < box[idx][xyIdx])
+            maxVAl = box[idx][xyIdx];
+
+        if (minVAl > box[idx][xyIdx])
+            minVAl = box[idx][xyIdx];
+    }
+}
+
+
+inline void AlignBox(float (&cornerRot)[4][2], float (&cornerAlign)[2][2]){
+
+    float maxX = 0;
+    float minX = 0;
+    float maxY = 0;
+    float minY = 0;
+
+    FindMaxMin(cornerRot, maxX, minX, 0); // 0 mean X
+    FindMaxMin(cornerRot, maxY, minY, 1); // 1 mean X
+
+    cornerAlign[0][0] = minX;
+    cornerAlign[0][1] = minY;
+    cornerAlign[1][0] = maxX;
+    cornerAlign[1][1] = maxY;
+}
+
+
+void RotateAroundCenter(bev::BBox& box, float (&corner)[4][2], float& cosVal, float& sinVal, float (&cornerANew)[4][2]){
+    
+    for(auto idx = 0; idx < 4; idx++){
+        auto x = corner[idx][0];
+        auto y = corner[idx][1];
+
+        cornerANew[idx][0] = (x - box.bbox[0]) * cosVal + (y - box.bbox[1]) * (-sinVal) + box.bbox[0];
+        cornerANew[idx][1] = (x - box.bbox[0]) * sinVal + (y - box.bbox[1]) * cosVal + box.bbox[1];
+    }
+}
+
+
+float IoUBev(bev::BBox& boxA, bev::BBox& boxB){
+   
+    float ax1 = boxA.bbox[0] - boxA.bbox[3]/2;
+    float ax2 = boxA.bbox[0] + boxA.bbox[3]/2;
+    float ay1 = boxA.bbox[1] - boxA.bbox[4]/2;
+    float ay2 = boxA.bbox[1] + boxA.bbox[4]/2;
+
+    float bx1 = boxB.bbox[0] - boxB.bbox[3]/2;
+    float bx2 = boxB.bbox[0] + boxB.bbox[3]/2;
+    float by1 = boxB.bbox[1] - boxB.bbox[4]/2;
+    float by2 = boxB.bbox[1] + boxB.bbox[4]/2;
+
+    float cornerA[4][2] = {{ax1, ay1}, {ax1, ay2},
+                         {ax2, ay1}, {ax2, ay2}};
+    float cornerB[4][2] = {{bx1, ay1}, {bx1, by2},
+                         {bx2, by1}, {bx2, by2}};
+    
+    float cornerARot[4][2] = {0};
+    float cornerBRot[4][2] = {0};
+
+    float cosA = cos(boxA.bbox[6]), sinA = sin(boxA.bbox[6]);
+    float cosB = cos(boxB.bbox[6]), sinB = sin(boxB.bbox[6]);
+
+    RotateAroundCenter(boxA, cornerA, cosA, sinA, cornerARot);
+    RotateAroundCenter(boxB, cornerB, cosB, sinB, cornerBRot);
+
+    float cornerAlignA[2][2] = {0};
+    float cornerAlignB[2][2] = {0};
+
+    AlignBox(cornerARot, cornerAlignA);
+    AlignBox(cornerBRot, cornerAlignB);
+    
+    float sBoxA = (cornerAlignA[1][0] - cornerAlignA[0][0]) * (cornerAlignA[1][1] - cornerAlignA[0][1]);
+    float sBoxB = (cornerAlignB[1][0] - cornerAlignB[0][0]) * (cornerAlignB[1][1] - cornerAlignB[0][1]);
+    
+    float interW = std::min(cornerAlignA[1][0], cornerAlignB[1][0]) - std::max(cornerAlignA[0][0], cornerAlignB[0][0]);
+    float interH = std::min(cornerAlignA[1][1], cornerAlignB[1][1]) - std::max(cornerAlignA[0][1], cornerAlignB[0][1]);
+    
+    float sInter = std::max(interW, 0.0f) * std::max(interH, 0.0f);
+    float sUnion = sBoxA + sBoxB - sInter;
+    
+    return sInter/sUnion;
+}
+
+
+
+void AlignedNMSBev(std::vector<bev::BBox>& predBoxs){
+    
+    if(predBoxs.size() == 0)
+        return;
+
+    std::sort(predBoxs.begin(),predBoxs.end(),[ ](bev::BBox& box1, bev::BBox& box2){return box1.score > box2.score;});
+
+    auto boxSize = predBoxs.size();
+    int numBoxValid = 0;
+    for(auto boxIdx1 =0; boxIdx1 < boxSize; boxIdx1++){
+        
+        if (predBoxs[boxIdx1].isDrop) continue;
+
+        for(auto boxIdx2 = boxIdx1+1; boxIdx2 < boxSize; boxIdx2++){
+            if(predBoxs[boxIdx2].isDrop == true)
+                continue;
+            float iou = IoUBev(predBoxs[boxIdx1], predBoxs[boxIdx2]);
+            if(iou > 0.25f)
+                predBoxs[boxIdx2].isDrop = true;
+        } 
+        if (!predBoxs[boxIdx1].isDrop) numBoxValid ++;
+    }
 }
