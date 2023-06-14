@@ -15,7 +15,7 @@ make -j12
 ```
 
 ## 3.result
-![](https://s3.bmp.ovh/imgs/2023/06/13/013063de906adc2f.jpg)
+![](./data/show_img)
 
 ## 4.问题
 + nms存在一定问题，对于小目标(行人)过滤不理想
