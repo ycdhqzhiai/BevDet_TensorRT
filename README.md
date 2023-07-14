@@ -18,5 +18,4 @@ make -j12
 ![](./data/show_img)
 
 ## 4.问题
-+ nms存在一定问题，对于小目标(行人)过滤不理想
-+ python原仓库显示部分太复杂，涉及到的坐标系太多，eog->global->lidar->camera->image,不知道显示图像的token，相机内参不准确，显示有一定问题
++ 后处理实现参考https://github.com/ycdhqzhiai/BEVDet_PostProcess
